@@ -3,21 +3,17 @@ import { json, urlencoded } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 
-// Import required packages
 
-// Create Express app instance
 const app = express();
 
-// Define port - use environment variable or default to 3000
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());                      // Enable CORS for all routes
-app.use(json());                      // Parse JSON request bodies
-app.use(urlencoded({ extended: true })); // Parse URL-encoded request bodies
-app.use(morgan('dev'));              // HTTP request logger
+// 
+app.use(cors());                     
+app.use(json());                      
+app.use(urlencoded({ extended: true })); 
+app.use(morgan('dev'));              
 
-// Basic route
 let Books = [
     { 
         title: "The Alchemist", 
@@ -51,28 +47,42 @@ let Books = [
 app.get('/', (req, res) => {
         res.status(200).json({Books});
 });
+app.post('/book/:id/review', (req, res) => {
+    const bookId = parseInt(req.params.id, 10);
+    const { rating, comment } = req.body;
 
+    if (isNaN(rating) || rating < 1 || rating > 5 || !comment || typeof comment !== 'string') {
+        return res.status(400).json({ error: 'Invalid review data' });
+    }
 
-// Example API route
-app.get('/api/status', (req, res) => {
-    res.status(200).json({ 
-        status: 'online',
-        timestamp: new Date().toISOString()
-    });
+    if (bookId >= 0 && bookId < Books.length) {
+        const newReview = { rating, comment };
+        Books[bookId].reviews.push(newReview);
+        res.status(201).json(Books[bookId]); // Respond with the updated book
+    } else {
+        res.status(404).json({ error: 'Book not found' });
+    }
 });
 
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.get('/book/:id', (req, res) => {
+    const bookId = parseInt(req.params.id, 10);
+    if (bookId >= 0 && bookId < Books.length) {
+        res.status(200).json(Books[bookId]);
+    } else {
+        res.status(404).json({ error: 'Book not found' });
+    }
+});
+
+
+app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Handle 404 routes
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

@@ -6,17 +6,30 @@ import { useEffect } from "react";
 import { useState } from "react";
 import axios from "axios";
 
+type Book = {
+  title: string;
+  author: string;
+  description: string;
+  reviews: Array<{
+    comment: string;
+    rating: number;
+  }>;
+};
 const BookReviewsPage = () => {
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState<Book[]>([]);
 
   async function fetchBooks() {
     try {
-      const response = await axios.get("/api/books"); // Update URL as needed
-      setBooks(response.data); // Use response.data directly
+      const response = await axios.get("http://localhost:3000/"); // Use the server's full URL
+      setBooks(response.data.Books); // Access the 'Books' property from the response
     } catch (error) {
       console.error("Failed to fetch books:", error.message);
     }
   }
+  const calculateAverageRating = (reviews) => {
+    const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return (totalRating / reviews.length).toFixed(1);
+  };
 
   useEffect(() => {
     fetchBooks();
@@ -37,7 +50,10 @@ const BookReviewsPage = () => {
                 <p className="text-gray-600">{book.author}</p>
                 <p className="text-gray-500 mt-2">{book.description}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  {book.reviews} reviews
+                  {book.reviews.length} reviews
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {calculateAverageRating(book.reviews)} ★
                 </p>
               </CardContent>
             </Card>
