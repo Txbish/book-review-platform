@@ -72,6 +72,34 @@ app.get('/book/:id', (req, res) => {
         res.status(404).json({ error: 'Book not found' });
     }
 });
+app.post('/add-book', (req, res) => {
+    const { title, author, description } = req.body;
+
+    if (
+        !title || typeof title !== 'string' || title.trim() === '' ||
+        !author || typeof author !== 'string' || author.trim() === '' ||
+        !description || typeof description !== 'string' || description.trim() === ''
+    ) {
+        return res.status(400).json({ error: 'Invalid book data' });
+    }
+
+    const duplicate = Books.find(book => 
+        book.title.toLowerCase() === title.toLowerCase() &&
+        book.author.toLowerCase() === author.toLowerCase()
+    );
+    if (duplicate) {
+        return res.status(409).json({ error: 'Book already exists' });
+    }
+
+    const newBook = {
+        title: title.trim(),
+        author: author.trim(),
+        description: description.trim(),
+        reviews: []
+    };
+    Books.push(newBook);
+    res.status(201).json(newBook);
+});
 
 
 app.use((err, req, res, next) => {
